@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Home / Finite Grids</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    background: #2b2b2b;
+    color: #e0e0e0;
+    font-family: "Bricolage Grotesque", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+  }
+
+  .grid-wrapper {
+    margin-bottom: 24px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(8, 34px);
+    grid-template-rows: repeat(8, 34px);
+    gap: 2px;
+    background: #555;
+    padding: 6px;
+  }
+
+  .cell {
+    width: 34px;
+    height: 34px;
+    background: #eee;
+  }
+
+  .cell.black {
+    background: #000;
+  }
+
+  .controls {
+    width: 320px;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  label {
+    display: block;
+    margin-top: 12px;
+  }
+
+  .counter {
+    margin-top: 14px;
+    font-size: 12px;
+  }
+
+  .about {
+    margin-top: 40px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    opacity: 0.85;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="grid-wrapper">
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="controls">
+  <label>
+    SPEED
+    <input type="range" min="1" max="1000" value="500" id="speed">
+  </label>
+
+  <label>
+    POSITION
+    <input type="range" min="0" max="1000000" value="0" id="position">
+  </label>
+
+  <div class="counter" id="counter"></div>
+</div>
+
+<div class="about">ABOUT</div>
+
+<script>
+  // grab elements from the page
+  const grid = document.getElementById("grid");
+  const speedSlider = document.getElementById("speed");
+  const positionSlider = document.getElementById("position");
+  const counter = document.getElementById("counter");
+
+  // total possible 8x8 black/white combinations (2^64)
+  const TOTAL = BigInt(2) ** BigInt(64);
+
+  // make 64 square divs
+  const cells = [];
+  for (let i = 0; i < 64; i++) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    grid.appendChild(cell);
+    cells.push(cell);
+  }
+
+  let index = BigInt(0);
+  let state = Array(64).fill(0);
+  let timer;
+
+  // convert a number into 64 on/off values
+  function indexToBits(num) {
+    const bits = Array(64).fill(0);
+    let n = num;
+
+    for (let i = 63; i >= 0; i--) {
+      bits[i] = Number(n & BigInt(1));
+      n >>= BigInt(1);
+    }
+
+    return bits;
+  }
+
+  // draw the grid
+  function render() {
+    for (let i = 0; i < 64; i++) {
+      cells[i].classList.toggle("black", state[i] === 1);
+    }
+
+    counter.textContent = `${index.toString()} / ${TOTAL.toString()}`;
+  }
+
+  function step() {
+    index += BigInt(1);
+    state = indexToBits(index);
+    render();
+  }
+
+  function start() {
+    clearInterval(timer);
+    const delay = 1001 - speedSlider.value;
+    timer = setInterval(step, delay);
+  }
+
+  speedSlider.addEventListener("input", start);
+
+  positionSlider.addEventListener("input", () => {
+    index = BigInt(positionSlider.value);
+    state = indexToBits(index);
+    render();
+  });
+
+  render();
+  start();
+</script>
+
+</body>
+</html>
